@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migraine Weather Risk</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="container">
+  <h1>Migraine Weather Risk</h1>
+
+  <label>Enter City:</label>
+  <input id="cityInput" type="text" placeholder="e.g. Stockholm">
+  <button id="checkBtn">Check Weather</button>
+
+  <canvas id="graph" width="500" height="200"></canvas>
+
+  <div id="legend">
+    <div class="legend-item">
+      <span class="legend-color"></span>
+      Migraine Risk (scaled %)
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="explanation">
+    <h3>How This Works</h3>
+    <p>This tool analyzes weather factors that research has linked to migraine sensitivity and converts them into a single risk score.</p>
+    <ul>
+      <li>Atmospheric pressure changes</li>
+      <li>Humidity levels</li>
+      <li>Temperature extremes</li>
+      <li>Wind speed and intensity</li>
+    </ul>
+    <p>Your risk score updates every time you check the current weather for a location.</p>
+  </div>
+
+  <div class="points-info">
+    <h3>How Your Risk Score Is Calculated</h3>
+    <ul>
+      <li><strong>Humidity:</strong> Above 70% adds 20 points, below 30% adds 10 points.</li>
+      <li><strong>Pressure:</strong> Below 1005 mb adds 30 points, above 1020 mb adds 15 points.</li>
+      <li><strong>Temperature:</strong> Very cold (&lt; 3°C) or hot (&gt; 28°C) adds 25 points.</li>
+      <li><strong>Wind:</strong> Strong winds (&gt; 25 kph) add 15 points.</li>
+      <li><strong>Score Range:</strong> The score is capped at 100 and grouped as Low, Medium or High risk.</li>
+    </ul>
+    <p>0–39 is <strong>Low</strong>, 40–69 is <strong>Medium</strong>, and 70–100 is <strong>High</strong> migraine weather risk.</p>
+  </div>
+
+  <div class="app-info">
+    <h3>How This Website Connects to Our App</h3>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <h4>The App</h4>
+        <p>Our Flutter app helps users prevent migraines using daily challenges, streaks, and rewards.</p>
+      </div>
+
+      <div class="info-card">
+        <h4>This Website</h4>
+        <p>We calculate migraine-triggering weather factors and turn them into actionable insights.</p>
+      </div>
+
+      <div class="info-card">
+        <h4>Together</h4>
+        <p>A complete prevention ecosystem combining habits, weather awareness, and motivation.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
