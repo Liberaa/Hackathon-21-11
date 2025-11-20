@@ -6,7 +6,7 @@ const ctx = canvas.getContext('2d')
 
 const API_KEY = '041ebf941ef649e690a173212252011'
 
-/* INITIAL GRAPH DATA (realistic baseline) */
+/* INITIAL GRAPH DATA */
 let previousData = [40, 55, 60, 50, 65, 45, 55]
 let animationStart = null
 let animationFrame = null
@@ -36,9 +36,7 @@ checkBtn.addEventListener('click', function() {
   const url = 'https://api.weatherapi.com/v1/current.json?key=' + API_KEY + '&q=' + city
 
   fetch(url)
-    .then(function(res) {
-      return res.json()
-    })
+    .then(function(res) { return res.json() })
     .then(function(data) {
       if (data.error) {
         resultsDiv.innerHTML = '<p style="color: var(--red)">City not found</p>'
@@ -51,7 +49,7 @@ checkBtn.addEventListener('click', function() {
     })
 })
 
-/* Process weather */
+/* Process weather + EXPO scoring + points */
 function processWeather(data) {
   const temp = data.current.temp_c
   const humidity = data.current.humidity
@@ -60,26 +58,37 @@ function processWeather(data) {
 
   let score = 0
 
-  if (humidity > 70) score += 20
-  if (humidity < 30) score += 10
+  if (humidity > 70) score = score + 20
+  if (humidity < 30) score = score + 10
 
-  if (pressure < 1005) score += 30
-  if (pressure > 1020) score += 15
+  if (pressure < 1005) score = score + 30
+  if (pressure > 1020) score = score + 15
 
-  if (temp > 28 || temp < 3) score += 25
+  if (temp > 28 || temp < 3) score = score + 25
 
-  if (wind > 25) score += 15
+  if (wind > 25) score = score + 15
 
   if (score > 100) score = 100
 
-  const riskClass = score >= 70 ? 'risk-high'
-                 : score >= 40 ? 'risk-medium'
-                 : 'risk-low'
+  /* Exponential point system */
+  const points = Math.round(Math.pow(2, score / 20))
 
-  const riskLabel = score >= 70 ? 'High'
-                 : score >= 40 ? 'Medium'
-                 : 'Low'
+  let totalPoints = parseInt(localStorage.getItem('totalPoints') || '0')
+  totalPoints = totalPoints + points
+  localStorage.setItem('totalPoints', totalPoints)
 
+  /* Risk labels */
+  const riskClass =
+    score >= 70 ? 'risk-high' :
+    score >= 40 ? 'risk-medium' :
+    'risk-low'
+
+  const riskLabel =
+    score >= 70 ? 'High' :
+    score >= 40 ? 'Medium' :
+    'Low'
+
+  /* UI output */
   let html = ''
   html += '<h3>Weather Analysis</h3>'
   html += '<div class="weather-info">'
@@ -92,15 +101,22 @@ function processWeather(data) {
   html += '<div class="info-block">'
   html += '<h4>Migraine Risk</h4>'
   html += '<p><span class="risk-badge ' + riskClass + '">' + riskLabel + '</span></p>'
+  html += '<p style="margin-top:8px">Migraine Risk Score: <strong>' + score + '%</strong></p>'
+  html += '</div>'
+
+  html += '<div class="info-block">'
+  html += '<h4>Points</h4>'
+  html += '<p>Today you can win : <strong>' + points + '</strong> points<br></p>'
   html += '</div>'
 
   html += '</div>'
   resultsDiv.innerHTML = html
 
+  /* Draw graph */
   drawGraphAnimated(score)
 }
 
-/* -------- REALISTIC GRAPH ENGINE -------- */
+/* ---------- GRAPH ENGINE WITH MARKER ---------- */
 
 function drawGraphAnimated(score) {
   const targetData = [
@@ -116,10 +132,10 @@ function drawGraphAnimated(score) {
   if (animationFrame) cancelAnimationFrame(animationFrame)
   animationStart = null
 
-  animateGraph(targetData)
+  animateGraph(targetData, score)
 }
 
-function animateGraph(targetData) {
+function animateGraph(targetData, score) {
   const duration = 700
 
   function step(timestamp) {
@@ -132,7 +148,7 @@ function animateGraph(targetData) {
       return start + (targetData[i] - start) * ease
     })
 
-    renderRealisticGraph(frameData)
+    renderRealisticGraph(frameData, score)
 
     if (progress < 1) {
       animationFrame = requestAnimationFrame(step)
@@ -144,33 +160,60 @@ function animateGraph(targetData) {
   requestAnimationFrame(step)
 }
 
-function renderRealisticGraph(data) {
+function renderRealisticGraph(data, score) {
   canvas.width = canvas.offsetWidth
-  canvas.height = 250
+  canvas.height = 270
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  const padding = 45
+  const padding = 55
   const width = canvas.width - padding * 2
   const height = canvas.height - padding * 2
   const step = width / (data.length - 1)
+
+  /* Graph title */
+  ctx.fillStyle = '#94a3b8'
+  ctx.font = '600 15px Inter'
+  ctx.textAlign = 'center'
+  ctx.fillText('Migraine Weather Forecast', canvas.width / 2, 28)
+
+  /* Y-axis label */
+  ctx.save()
+  ctx.translate(20, canvas.height / 2)
+  ctx.rotate(-Math.PI / 2)
+  ctx.fillStyle = '#64748b'
+  ctx.font = '600 13px Inter'
+  ctx.fillText('Migraine Risk (%)', 0, 0)
+  ctx.restore()
+
+  /* X-axis label */
+  ctx.fillStyle = '#64748b'
+  ctx.font = '600 13px Inter'
+  ctx.fillText('Forecast Points', canvas.width / 2, canvas.height - 10)
 
   /* Grid */
   ctx.strokeStyle = '#273549'
   ctx.lineWidth = 1
   ctx.setLineDash([4,4])
 
-  for (let i = 0; i <= 4; i++) {
-    const y = padding + (height / 4) * i
+  for (let i = 0; i <= 5; i++) {
+    const y = padding + (height / 5) * i
+
     ctx.beginPath()
     ctx.moveTo(padding, y)
     ctx.lineTo(canvas.width - padding, y)
     ctx.stroke()
+
+    const labelVal = 100 - i * 20
+    ctx.fillStyle = '#64748b'
+    ctx.font = '600 12px Inter'
+    ctx.textAlign = 'right'
+    ctx.fillText(labelVal, padding - 10, y + 4)
   }
 
   ctx.setLineDash([])
 
-  /* Points */
+  /* Convert data to points */
   let points = []
   for (let i = 0; i < data.length; i++) {
     const x = padding + i * step
@@ -214,19 +257,48 @@ function renderRealisticGraph(data) {
   ctx.fillStyle = fill
   ctx.fill()
 
-  /* Glowing points */
-  points.forEach(function(p) {
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2)
-    ctx.fillStyle = '#1e293b'
-    ctx.fill()
+  /* X labels */
+  ctx.fillStyle = '#64748b'
+  ctx.font = '600 12px Inter'
+  ctx.textAlign = 'center'
+  const labels = ['1','2','3','4','5','6','7']
 
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2)
-    ctx.fillStyle = '#3b82f6'
-    ctx.fill()
-  })
+  for (let i = 0; i < points.length; i++) {
+    ctx.fillText(labels[i], points[i].x, canvas.height - padding + 22)
+  }
+
+  /* ---------- CURRENT SCORE MARKER ---------- */
+
+  const scorePoint = points[2]
+
+  /* Vertical guide line */
+  ctx.beginPath()
+  ctx.strokeStyle = 'rgba(96,165,250,0.25)'
+  ctx.lineWidth = 2
+  ctx.setLineDash([6,4])
+  ctx.moveTo(scorePoint.x, padding)
+  ctx.lineTo(scorePoint.x, canvas.height - padding)
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  /* Outer glow */
+  ctx.beginPath()
+  ctx.arc(scorePoint.x, scorePoint.y, 12, 0, Math.PI * 2)
+  ctx.fillStyle = 'rgba(96,165,250,0.25)'
+  ctx.fill()
+
+  /* Inner solid */
+  ctx.beginPath()
+  ctx.arc(scorePoint.x, scorePoint.y, 6, 0, Math.PI * 2)
+  ctx.fillStyle = '#60a5fa'
+  ctx.fill()
+
+  /* Score label */
+  ctx.fillStyle = '#e2e8f0'
+  ctx.font = '600 13px Inter'
+  ctx.textAlign = 'center'
+  ctx.fillText(score + '%', scorePoint.x, scorePoint.y - 15)
 }
 
-/* Initial render */
-renderRealisticGraph(previousData)
+/* Initial */
+renderRealisticGraph(previousData, 55)
