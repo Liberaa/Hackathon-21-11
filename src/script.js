@@ -36,8 +36,8 @@ checkBtn.addEventListener('click', function() {
   const url = 'https://api.weatherapi.com/v1/current.json?key=' + API_KEY + '&q=' + city
 
   fetch(url)
-    .then(function(res) { return res.json() })
-    .then(function(data) {
+    .then(res => res.json())
+    .then(data => {
       if (data.error) {
         resultsDiv.innerHTML = '<p style="color: var(--red)">City not found</p>'
         setLoading(false)
@@ -49,7 +49,7 @@ checkBtn.addEventListener('click', function() {
     })
 })
 
-/* Process weather + EXPO scoring + points */
+/* Process weather + MATCHED SCORING WITH APP */
 function processWeather(data) {
   const temp = data.current.temp_c
   const humidity = data.current.humidity
@@ -58,61 +58,55 @@ function processWeather(data) {
 
   let score = 0
 
-  if (humidity > 70) score = score + 20
-  if (humidity < 30) score = score + 10
+  // === MATCHED WITH FLUTTER APP === //
+  if (humidity > 70) score += 20
+  if (humidity < 30) score += 10
 
-  if (pressure < 1005) score = score + 30
-  if (pressure > 1020) score = score + 15
+  if (pressure < 1005) score += 30
+  if (pressure > 1020) score += 10    // CHANGED (was 15)
 
-  if (temp > 28 || temp < 3) score = score + 25
+  if (temp < 5) score += 15           // MATCHED WITH APP
+  if (temp > 28) score += 25
 
-  if (wind > 25) score = score + 15
+  if (wind > 25) score += 15
 
   if (score > 100) score = 100
 
-  /* Exponential point system */
-  const points = Math.round(Math.pow(2, score / 20))
+  // === POINTS (MATCHES FLUTTER) === //
+  const points = Math.floor(score / 10) // CHANGED to match `pointsEarned()` in Dart
 
   let totalPoints = parseInt(localStorage.getItem('totalPoints') || '0')
-  totalPoints = totalPoints + points
+  totalPoints += points
   localStorage.setItem('totalPoints', totalPoints)
 
-  /* Risk labels */
-  const riskClass =
-    score >= 70 ? 'risk-high' :
-    score >= 40 ? 'risk-medium' :
-    'risk-low'
+  // === Risk labels === //
+  const riskClass = score >= 70 ? 'risk-high' : score >= 40 ? 'risk-medium' : 'risk-low'
+  const riskLabel = score >= 70 ? 'High' : score >= 40 ? 'Medium' : 'Low'
 
-  const riskLabel =
-    score >= 70 ? 'High' :
-    score >= 40 ? 'Medium' :
-    'Low'
-
-  /* UI output */
+  // === UI Output === //
   let html = ''
   html += '<h3>Weather Analysis</h3>'
   html += '<div class="weather-info">'
 
   html += '<div class="info-block">'
   html += '<h4>Conditions</h4>'
-  html += '<p>Temperature: ' + temp + '°C<br>Humidity: ' + humidity + '%<br>Pressure: ' + pressure + ' mb<br>Wind: ' + wind + ' kph</p>'
+  html += `<p>Temperature: ${temp}°C<br>Humidity: ${humidity}%<br>Pressure: ${pressure} mb<br>Wind: ${wind} kph</p>`
   html += '</div>'
 
   html += '<div class="info-block">'
   html += '<h4>Migraine Risk</h4>'
-  html += '<p><span class="risk-badge ' + riskClass + '">' + riskLabel + '</span></p>'
-  html += '<p style="margin-top:8px">Migraine Risk Score: <strong>' + score + '%</strong></p>'
+  html += `<p><span class="risk-badge ${riskClass}">${riskLabel}</span></p>`
+  html += `<p style="margin-top:8px">Migraine Risk Score: <strong>${score}%</strong></p>`
   html += '</div>'
 
   html += '<div class="info-block">'
   html += '<h4>Points</h4>'
-  html += '<p>Today you can win : <strong>' + points + '</strong> points<br></p>'
+  html += `<p>Today you can win : <strong>${points}</strong> points<br></p>`
   html += '</div>'
 
   html += '</div>'
   resultsDiv.innerHTML = html
 
-  /* Draw graph */
   drawGraphAnimated(score)
 }
 
@@ -131,7 +125,6 @@ function drawGraphAnimated(score) {
 
   if (animationFrame) cancelAnimationFrame(animationFrame)
   animationStart = null
-
   animateGraph(targetData, score)
 }
 
@@ -140,13 +133,9 @@ function animateGraph(targetData, score) {
 
   function step(timestamp) {
     if (!animationStart) animationStart = timestamp
-
     const progress = Math.min((timestamp - animationStart) / duration, 1)
     const ease = 1 - Math.pow(1 - progress, 3)
-
-    const frameData = previousData.map(function(start, i) {
-      return start + (targetData[i] - start) * ease
-    })
+    const frameData = previousData.map((start, i) => start + (targetData[i] - start) * ease)
 
     renderRealisticGraph(frameData, score)
 
@@ -171,13 +160,13 @@ function renderRealisticGraph(data, score) {
   const height = canvas.height - padding * 2
   const step = width / (data.length - 1)
 
-  /* Graph title */
+  // Graph title
   ctx.fillStyle = '#94a3b8'
   ctx.font = '600 15px Inter'
   ctx.textAlign = 'center'
   ctx.fillText('Migraine Weather Forecast', canvas.width / 2, 28)
 
-  /* Y-axis label */
+  // Y-axis label
   ctx.save()
   ctx.translate(20, canvas.height / 2)
   ctx.rotate(-Math.PI / 2)
@@ -186,24 +175,22 @@ function renderRealisticGraph(data, score) {
   ctx.fillText('Migraine Risk (%)', 0, 0)
   ctx.restore()
 
-  /* X-axis label */
+  // X-axis label
   ctx.fillStyle = '#64748b'
   ctx.font = '600 13px Inter'
   ctx.fillText('Forecast Points', canvas.width / 2, canvas.height - 10)
 
-  /* Grid */
+  // Grid
   ctx.strokeStyle = '#273549'
   ctx.lineWidth = 1
   ctx.setLineDash([4,4])
 
   for (let i = 0; i <= 5; i++) {
     const y = padding + (height / 5) * i
-
     ctx.beginPath()
     ctx.moveTo(padding, y)
     ctx.lineTo(canvas.width - padding, y)
     ctx.stroke()
-
     const labelVal = 100 - i * 20
     ctx.fillStyle = '#64748b'
     ctx.font = '600 12px Inter'
@@ -213,15 +200,15 @@ function renderRealisticGraph(data, score) {
 
   ctx.setLineDash([])
 
-  /* Convert data to points */
+  // Data to graph points
   let points = []
   for (let i = 0; i < data.length; i++) {
     const x = padding + i * step
     const y = padding + height - (data[i] / 100 * height)
-    points.push({ x: x, y: y })
+    points.push({ x, y })
   }
 
-  /* Smooth line */
+  // Smooth line
   ctx.beginPath()
   ctx.moveTo(points[0].x, points[0].y)
 
@@ -230,15 +217,9 @@ function renderRealisticGraph(data, score) {
     const midY = (points[i].y + points[i + 1].y) / 2
     ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY)
   }
+  ctx.quadraticCurveTo(points[points.length - 1].x, points[points.length - 1].y, points[points.length - 1].x, points[points.length - 1].y)
 
-  ctx.quadraticCurveTo(
-    points[points.length - 1].x,
-    points[points.length - 1].y,
-    points[points.length - 1].x,
-    points[points.length - 1].y
-  )
-
-  const gradient = ctx.createLinearGradient(0,0,canvas.width,0)
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0)
   gradient.addColorStop(0, '#3b82f6')
   gradient.addColorStop(1, '#60a5fa')
 
@@ -246,54 +227,45 @@ function renderRealisticGraph(data, score) {
   ctx.lineWidth = 3
   ctx.stroke()
 
-  /* Fill */
+  /* FILL AREA */
   const fill = ctx.createLinearGradient(0, padding, 0, canvas.height)
   fill.addColorStop(0, 'rgba(59,130,246,0.25)')
   fill.addColorStop(1, 'rgba(59,130,246,0)')
-
   ctx.lineTo(points[points.length - 1].x, canvas.height - padding)
   ctx.lineTo(points[0].x, canvas.height - padding)
   ctx.closePath()
   ctx.fillStyle = fill
   ctx.fill()
 
-  /* X labels */
+  // X labels
   ctx.fillStyle = '#64748b'
   ctx.font = '600 12px Inter'
   ctx.textAlign = 'center'
   const labels = ['1','2','3','4','5','6','7']
+  labels.forEach((lbl, i) => {
+    ctx.fillText(lbl, points[i].x, canvas.height - padding + 22)
+  })
 
-  for (let i = 0; i < points.length; i++) {
-    ctx.fillText(labels[i], points[i].x, canvas.height - padding + 22)
-  }
-
-  /* ---------- CURRENT SCORE MARKER ---------- */
-
+  /* Current score marker */
   const scorePoint = points[2]
-
-  /* Vertical guide line */
   ctx.beginPath()
   ctx.strokeStyle = 'rgba(96,165,250,0.25)'
-  ctx.lineWidth = 2
   ctx.setLineDash([6,4])
   ctx.moveTo(scorePoint.x, padding)
   ctx.lineTo(scorePoint.x, canvas.height - padding)
   ctx.stroke()
   ctx.setLineDash([])
 
-  /* Outer glow */
   ctx.beginPath()
   ctx.arc(scorePoint.x, scorePoint.y, 12, 0, Math.PI * 2)
   ctx.fillStyle = 'rgba(96,165,250,0.25)'
   ctx.fill()
 
-  /* Inner solid */
   ctx.beginPath()
   ctx.arc(scorePoint.x, scorePoint.y, 6, 0, Math.PI * 2)
   ctx.fillStyle = '#60a5fa'
   ctx.fill()
 
-  /* Score label */
   ctx.fillStyle = '#e2e8f0'
   ctx.font = '600 13px Inter'
   ctx.textAlign = 'center'
