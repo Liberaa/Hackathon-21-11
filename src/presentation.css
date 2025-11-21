@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* --- Global Styles --- */
+body {
+  font-family: Inter, sans-serif;
+  background: #0f172a;
+  color: white;
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+/* --- Main Container --- */
+#container {
+  max-width: 900px;
+  width: 100%;
+  background: #1e293b;
+  padding: 40px;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  text-align: left;
+}
+
+h1 {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+/* --- Section Blocks --- */
+.explanation,
+.points-info,
+.app-info {
+  background: #162032;
+  padding: 25px;
+  border-radius: 12px;
+  margin-top: 25px;
+  border: 1px solid #273549;
+}
+
+h3 {
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+  color: #60a5fa;
+}
+
+/* --- Text & Lists --- */
+p {
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+ul {
+  list-style-position: inside;
+  margin-bottom: 12px;
+}
+
+ul ul { 
+  margin-left: 20px; 
+  list-style-type: disc;
+}
+
+strong {
+  color: #60a5fa;
+}
+
+/* --- Info Grid (3 columns) --- */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.info-card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #273549;
+  transition: 0.25s;
+}
+
+.info-card:hover {
+  transform: translateY(-3px);
+}
+
+.info-card h4 {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #3b82f6;
+}
+
+.info-card p {
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+/* --- Back Button --- */
+#backBtn {
+  display: inline-block;
+  margin-bottom: 20px;
+  background: #3b82f6;
+  color: white;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: .25s;
+}
+
+#backBtn:hover {
+  background: #60a5fa;
+  transform: translateY(-2px);
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  body {
+    padding: 20px;
+  }
+
+  #container {
+    padding: 25px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 15px;
+  }
+
+  #container {
+    padding: 18px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  h3 {
+    font-size: 1.3rem;
+  }
+}

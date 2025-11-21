@@ -315,6 +315,28 @@ label {
   margin-right: 8px;
 }
 
+/* Presentation Button */
+.presentation-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  background: var(--accent);
+  color: white;
+  padding: 14px 28px;
+  font-weight: 700;
+  border-radius: 40px;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transition: 0.25s;
+  z-index: 999;
+}
+
+.presentation-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-3px);
+}
+
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
